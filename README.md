@@ -114,7 +114,7 @@ tr.row-notified td{background:#fffbf0!important;}
 </style>
 </head>
 <body>
- 
+
 <nav>
   <span class="logo">MPU 零件庫存</span>
   <div class="nav-links">
@@ -122,7 +122,7 @@ tr.row-notified td{background:#fffbf0!important;}
     <button id="navAdmin" onclick="goAdmin()">管理</button>
   </div>
 </nav>
- 
+
 <!-- 查詢頁 -->
 <div id="pageQuery" class="page active">
   <div class="container">
@@ -165,7 +165,7 @@ tr.row-notified td{background:#fffbf0!important;}
     </div>
   </div>
 </div>
- 
+
 <!-- 登入 -->
 <div id="pageLogin" class="page">
   <div class="login-wrap">
@@ -178,7 +178,7 @@ tr.row-notified td{background:#fffbf0!important;}
     </div>
   </div>
 </div>
- 
+
 <!-- 管理頁 -->
 <div id="pageAdmin" class="page">
   <div class="container">
@@ -186,7 +186,7 @@ tr.row-notified td{background:#fffbf0!important;}
       <button class="tab-btn active" id="tabInventory" onclick="switchAdminTab('inventory')">庫存管理</button>
       <button class="tab-btn" id="tabRecords" onclick="switchAdminTab('records')">訂購/預留紀錄 <span class="badge-count" id="expiredBadge" style="display:none">!</span></button>
     </div>
- 
+
     <!-- 庫存管理 tab -->
     <div id="adminInventory">
       <div class="stats" id="statsA"></div>
@@ -225,11 +225,11 @@ tr.row-notified td{background:#fffbf0!important;}
         <button id="nextA" onclick="changePageA(1)">下一頁 →</button>
       </div>
     </div>
- 
+
     <!-- 紀錄 tab -->
     <div id="adminRecords" style="display:none">
       <div class="toolbar">
-        <input type="text" id="searchRec" placeholder="搜尋零件編號或聯絡人..." oninput="renderRecords()">
+        <input type="text" id="searchRec" placeholder="搜尋零件編號或電話..." oninput="renderRecords()">
         <select id="recTypeFilter" onchange="renderRecords()">
           <option value="">全部類型</option>
           <option value="訂購">訂購單</option>
@@ -237,6 +237,7 @@ tr.row-notified td{background:#fffbf0!important;}
         </select>
         <select id="recStatusFilter" onchange="renderRecords()">
           <option value="">全部狀態</option>
+          <option value="未處理">未處理</option>
           <option value="已訂購">已訂購</option>
           <option value="已到貨">已到貨</option>
           <option value="已預留">已預留</option>
@@ -263,7 +264,7 @@ tr.row-notified td{background:#fffbf0!important;}
     </div>
   </div>
 </div>
- 
+
 <!-- 新增/編輯零件 Modal -->
 <div class="overlay" id="partModal">
   <div class="modal">
@@ -365,7 +366,7 @@ tr.row-notified td{background:#fffbf0!important;}
     </div>
   </div>
 </div>
- 
+
 <!-- 刪除確認 -->
 <div class="overlay" id="delModal">
   <div class="modal" style="max-width:360px;text-align:center;">
@@ -377,7 +378,7 @@ tr.row-notified td{background:#fffbf0!important;}
     </div>
   </div>
 </div>
- 
+
 <!-- 訂購表單 -->
 <div class="overlay" id="orderModal">
   <div class="modal" style="max-width:440px;">
@@ -402,7 +403,7 @@ tr.row-notified td{background:#fffbf0!important;}
     </div>
   </div>
 </div>
- 
+
 <!-- 預留表單 -->
 <div class="overlay" id="reserveModal">
   <div class="modal" style="max-width:440px;">
@@ -428,7 +429,7 @@ tr.row-notified td{background:#fffbf0!important;}
     </div>
   </div>
 </div>
- 
+
 <!-- 儲存成功 -->
 <div class="overlay" id="savedModal">
   <div class="modal" style="max-width:320px;text-align:center;">
@@ -438,7 +439,7 @@ tr.row-notified td{background:#fffbf0!important;}
     <button class="btn btn-primary" style="width:100%" onclick="closeSavedModal()">確定</button>
   </div>
 </div>
- 
+
 <!-- 紀錄備註編輯 -->
 <div class="overlay" id="recNoteModal">
   <div class="modal" style="max-width:380px;">
@@ -453,15 +454,15 @@ tr.row-notified td{background:#fffbf0!important;}
     </div>
   </div>
 </div>
- 
+
 <div class="toast" id="toast"></div>
- 
+
 <script>
 const ADMIN_PW='5237';
 const STORAGE_KEY='mpu_parts_v6';
 const ORDERS_KEY='mpu_orders_v6';
 const PAGE_SIZE=15;
- 
+
 const DEFAULT_PARTS=[
   {id:"110019",series:"沙發系列",locations:[{wall:"MPU",zone:"A區"}],qty:"",level:"high",note:""},
   {id:"117175",series:"沙發系列",locations:[{wall:"MPU",zone:"A區"}],qty:"",level:"high",note:""},
@@ -616,7 +617,7 @@ const DEFAULT_PARTS=[
   {id:"104864",series:"",locations:[{wall:"ASIS背面",zone:""}],qty:"",level:"high",note:""},
   {id:"108116",series:"",locations:[{wall:"ASIS背面",zone:""}],qty:"",level:"high",note:""},
 ];
- 
+
 let parts=[], orders=[];
 let loggedIn=false, editIdx=null, deleteIdx=null;
 let pageQ=1, pageA=1, pageRec=1;
@@ -624,7 +625,7 @@ let filteredQ=[], filteredA=[], filteredRec=[];
 let savedPageA=1;
 let currentAdminTab='inventory';
 let editRecNoteIdx=null;
- 
+
 function load(){
   try{const s=localStorage.getItem(STORAGE_KEY);parts=s?JSON.parse(s):JSON.parse(JSON.stringify(DEFAULT_PARTS));}
   catch(e){parts=JSON.parse(JSON.stringify(DEFAULT_PARTS));}
@@ -634,20 +635,23 @@ function load(){
 }
 function save(){localStorage.setItem(STORAGE_KEY,JSON.stringify(parts));}
 function saveOrders(){localStorage.setItem(ORDERS_KEY,JSON.stringify(orders));}
- 
+
 function checkExpiry(){
   const now=new Date();
   let changed=false;
   orders.forEach(o=>{
-    if(o.status==='已通知'&&o.notifiedDate){
-      const notified=new Date(o.notifiedDate);
-      const diff=(now-notified)/(1000*60*60*24);
-      if(diff>=30){o.status='逾期未領';changed=true;}
-    }
+    if (o.status === '已通知' && o.notifiedDate) {
+  const notified = new Date(o.notifiedDate);
+  const expireDate = new Date(notified);
+  expireDate.setDate(expireDate.getDate() + 30);
+  if (now >= expireDate) {o.status = '逾期未領';changed = true;
+  }
+}
+
   });
   if(changed)saveOrders();
 }
- 
+
 function daysLeft(notifiedDate){
   if(!notifiedDate)return null;
   const notified=new Date(notifiedDate);
@@ -655,18 +659,18 @@ function daysLeft(notifiedDate){
   const diff=30-Math.floor((now-notified)/(1000*60*60*24));
   return diff;
 }
- 
+
 function lvClass(lv){return{high:'lv-high',low:'lv-low',out:'lv-out',na:'lv-na'}[lv]||'lv-high';}
 function lvLabel(lv){return{high:'充足',low:'偏低',out:'缺貨',na:'缺貨無法訂購'}[lv]||'充足';}
 function wallTagClass(w){if(w==='MPU')return'tag-mpu';if(w==='ASIS')return'tag-asis';return'tag-asisb';}
- 
+
 function statusClass(s){
   return{
     '已訂購':'st-ordered','已到貨':'st-arrived','已預留':'st-reserved',
     '已通知':'st-notified','逾期未領':'st-expired','缺貨無法訂購':'st-unavail'
   }[s]||'st-ordered';
 }
- 
+
 function locHTML(locs){
   if(!locs||!locs.length)return'<span style="color:#bbb">—</span>';
   return'<div class="locations">'+locs.map(l=>{
@@ -674,16 +678,16 @@ function locHTML(locs){
     return`<span class="tag ${wallTagClass(l.wall)}">${label}</span>`;
   }).join('')+'</div>';
 }
- 
+
 function todayStr(){return new Date().toLocaleDateString('zh-TW',{year:'numeric',month:'2-digit',day:'2-digit'});}
 function todayISO(){return new Date().toISOString().split('T')[0];}
- 
+
 function showToast(msg){
   const t=document.getElementById('toast');
   t.textContent=msg;t.classList.add('show');
   setTimeout(()=>t.classList.remove('show'),2500);
 }
- 
+
 function getSeriesList(){
   return Array.from(new Set(parts.map(p=>p.series).filter(Boolean))).sort();
 }
@@ -697,7 +701,7 @@ function updateSeriesDropdowns(){
     sel.value=cur;
   });
 }
- 
+
 function updateExpiredBadge(){
   checkExpiry();
   const cnt=orders.filter(o=>o.status==='逾期未領').length;
@@ -705,7 +709,7 @@ function updateExpiredBadge(){
   if(cnt>0){badge.style.display='';badge.textContent=cnt;}
   else badge.style.display='none';
 }
- 
+
 /* ---- PAGE NAV ---- */
 function showPage(p){
   ['Query','Login','Admin'].forEach(x=>document.getElementById('page'+x).classList.remove('active'));
@@ -725,7 +729,7 @@ function doLogin(){
   else{document.getElementById('loginErr').textContent='密碼錯誤，請重試';}
 }
 function logout(){loggedIn=false;showPage('query');showToast('已登出');}
- 
+
 function switchAdminTab(tab){
   currentAdminTab=tab;
   document.getElementById('tabInventory').classList.toggle('active',tab==='inventory');
@@ -735,7 +739,7 @@ function switchAdminTab(tab){
   if(tab==='records'){checkExpiry();renderRecords();}
   else{renderAdmin();renderStatsA();}
 }
- 
+
 /* ---- STATS ---- */
 function statHTML(t,h,l,o,na){
   return`<div class="stat"><div class="stat-label">總零件數</div><div class="stat-val">${t}</div></div>
@@ -746,9 +750,9 @@ function statHTML(t,h,l,o,na){
 }
 function renderStatsQ(){document.getElementById('statsQ').innerHTML=statHTML(parts.length,parts.filter(p=>p.level==='high').length,parts.filter(p=>p.level==='low').length,parts.filter(p=>p.level==='out').length,parts.filter(p=>p.level==='na').length);}
 function renderStatsA(){document.getElementById('statsA').innerHTML=statHTML(parts.length,parts.filter(p=>p.level==='high').length,parts.filter(p=>p.level==='low').length,parts.filter(p=>p.level==='out').length,parts.filter(p=>p.level==='na').length);}
- 
+
 function matchWall(p,wall){if(!wall)return true;return p.locations&&p.locations.some(l=>l.wall===wall);}
- 
+
 /* ---- QUERY ---- */
 function filterQ(){
   const q=document.getElementById('searchQ').value.trim().toLowerCase();
@@ -799,7 +803,7 @@ function drawQ(){
   document.getElementById('prevQ').disabled=pageQ<=1;
   document.getElementById('nextQ').disabled=pageQ>=tp;
 }
- 
+
 /* ---- ADMIN INVENTORY ---- */
 function filterA(){
   const q=document.getElementById('searchA').value.trim().toLowerCase();
@@ -851,13 +855,13 @@ function drawA(){
   document.getElementById('prevA').disabled=pageA<=1;
   document.getElementById('nextA').disabled=pageA>=tp;
 }
- 
+
 function quickLevel(i,val){
   parts[i].level=val;save();
   filterA();const tp=Math.ceil(filteredA.length/PAGE_SIZE);if(pageA>tp&&tp>0)pageA=tp;
   drawA();renderStatsA();
 }
- 
+
 /* ---- RECORDS TAB ---- */
 function filterRec(){
   const q=document.getElementById('searchRec').value.trim().toLowerCase();
@@ -923,7 +927,7 @@ function drawRec(){
   document.getElementById('prevRec').disabled=pageRec<=1;
   document.getElementById('nextRec').disabled=pageRec>=tp;
 }
- 
+
 function updateRecStatus(i,val){
   orders[i].status=val;
   if(val==='已通知'&&!orders[i].notifiedDate){orders[i].notifiedDate=todayISO();}
@@ -931,11 +935,11 @@ function updateRecStatus(i,val){
   saveOrders();filterRec();const tp=Math.ceil(filteredRec.length/PAGE_SIZE);if(pageRec>tp&&tp>0)pageRec=tp;
   drawRec();updateExpiredBadge();
 }
- 
+
 function deleteRec(i){
   orders.splice(i,1);saveOrders();renderRecords();showToast('已刪除紀錄');
 }
- 
+
 function openRecNoteModal(i){
   editRecNoteIdx=i;
   document.getElementById('recNoteInput').value=orders[i].note||'';
@@ -947,7 +951,7 @@ function saveRecNote(){
   orders[editRecNoteIdx].note=document.getElementById('recNoteInput').value.trim();
   saveOrders();closeRecNoteModal();filterRec();drawRec();showToast('備註已更新');
 }
- 
+
 /* ---- PART MODAL ---- */
 function toggleLoc(type){
   const chk=document.getElementById('chk'+type);
@@ -1005,14 +1009,14 @@ function openEditModal(i){
   document.getElementById('partModal').classList.add('show');
 }
 function closeModal(){document.getElementById('partModal').classList.remove('show');}
- 
+
 function buildMPUzone(){
   const area=document.getElementById('fZoneMPUarea').value;
   const row=document.getElementById('fZoneMPUrow').value.trim();
   if(!area)return'';
   return row?`${area}第${row}排`:area;
 }
- 
+
 function savePart(){
   const id=document.getElementById('fId').value.trim();
   if(!id){document.getElementById('modalErr').textContent='零件編號為必填';return;}
@@ -1039,7 +1043,7 @@ function savePart(){
   document.getElementById('savedModal').classList.add('show');
 }
 function closeSavedModal(){document.getElementById('savedModal').classList.remove('show');}
- 
+
 /* ---- DELETE ---- */
 function openDelModal(i){deleteIdx=i;document.getElementById('delPartId').textContent=parts[i].id;document.getElementById('delModal').classList.add('show');}
 function closeDelModal(){document.getElementById('delModal').classList.remove('show');deleteIdx=null;}
@@ -1049,7 +1053,7 @@ function confirmDelete(){
   parts.splice(deleteIdx,1);save();closeDelModal();updateSeriesDropdowns();
   filterA();const tp=Math.ceil(filteredA.length/PAGE_SIZE);pageA=Math.min(cur,tp||1);drawA();renderStatsA();showToast('已刪除 '+id);
 }
- 
+
 /* ---- ORDER / RESERVE ---- */
 function openOrderModal(id){
   const p=parts.find(x=>x.id===id);
@@ -1068,7 +1072,7 @@ function openOrderModalUnknown(){
   document.getElementById('oPartId').disabled=false;
 }
 function closeOrderModal(){document.getElementById('orderModal').classList.remove('show');}
- 
+
 function openReserveModal(id){
   const p=parts.find(x=>x.id===id);
   document.getElementById('reservePartId').textContent=id;
@@ -1081,7 +1085,7 @@ function openReserveModal(id){
   document.getElementById('reserveModal').classList.add('show');
 }
 function closeReserveModal(){document.getElementById('reserveModal').classList.remove('show');}
- 
+
 function submitOrder(){
   const qty=document.getElementById('oQty').value,name=document.getElementById('oName').value.trim();
   if(!qty||parseInt(qty)<1){document.getElementById('orderErr').textContent='請輸入訂購數量';return;}
@@ -1090,13 +1094,13 @@ function submitOrder(){
   if(!partId){document.getElementById('orderErr').textContent='請輸入零件編號';return;}
   orders.push({type:'訂購',partId,series:document.getElementById('oSeries').value,
     qty,date:todayStr(),name,phone:document.getElementById('oPhone').value,
-    note:document.getElementById('oNote').value,status:'已訂購',notifiedDate:null,time:new Date().toISOString()});
+    note:document.getElementById('oNote').value,status:'未處理',notifiedDate:null,time:new Date().toISOString()});
   saveOrders();closeOrderModal();updateExpiredBadge();
   document.getElementById('savedTitle').textContent='訂購單已送出';
   document.getElementById('savedMsg').textContent=`零件 ${partId}，數量 ${qty}，聯絡人 ${name}`;
   document.getElementById('savedModal').classList.add('show');
 }
- 
+
 function submitReserve(){
   const qty=document.getElementById('rQty').value,name=document.getElementById('rName').value.trim();
   if(!qty||parseInt(qty)<1){document.getElementById('reserveErr').textContent='請輸入預留數量';return;}
@@ -1110,7 +1114,7 @@ function submitReserve(){
   document.getElementById('savedMsg').textContent=`零件 ${document.getElementById('rPartId').value}，數量 ${qty}，聯絡人 ${name}`;
   document.getElementById('savedModal').classList.add('show');
 }
- 
+
 function printForm(type){
   const isO=type==='order';
   const id=isO?document.getElementById('oPartId').value:document.getElementById('rPartId').value;
@@ -1144,7 +1148,7 @@ function printForm(type){
   <script>window.onload=function(){window.print();}<\/script></body></html>`);
   w.document.close();
 }
- 
+
 /* ---- EXPORT ---- */
 function exportCSV(){
   const rows=[['零件編號','系列','架位','數量','庫存水位','備註']];
@@ -1167,7 +1171,7 @@ function exportRecordsCSV(){
   a.download='MPU訂購預留紀錄_'+new Date().toLocaleDateString('zh-TW').replace(/\//g,'-')+'.csv';
   a.click();showToast('已匯出紀錄 CSV ✓');
 }
- 
+
 /* ---- INIT ---- */
 load();
 updateSeriesDropdowns();
