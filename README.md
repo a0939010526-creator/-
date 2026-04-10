@@ -666,9 +666,9 @@ function wallTagClass(w){if(w==='MPU')return'tag-mpu';if(w==='ASIS')return'tag-a
 
 function statusClass(s){
   return{
-    '已訂購':'st-ordered','已到貨':'st-arrived','已預留':'st-reserved',
+    '未處理': 'st-pending','已訂購':'st-ordered','已到貨':'st-arrived','已預留':'st-reserved',
     '已通知':'st-notified','逾期未領':'st-expired','缺貨無法訂購':'st-unavail'
-  }[s]||'st-ordered';
+  }[s]||'st-pending';
 }
 
 function locHTML(locs){
