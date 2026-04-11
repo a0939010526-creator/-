@@ -146,6 +146,7 @@ tr.item-row:hover td{background:#f9f9f9;}
     <div class="stats" id="statsQ"></div>
     <div class="toolbar">
       <input type="text" id="searchQ" placeholder="搜尋零件編號..." oninput="renderQuery()">
+      <button class="btn btn-primary" onclick="renderQuery()">搜尋</button>
       <select id="seriesQ" onchange="renderQuery()"><option value="">全部系列</option></select>
       <select id="wallQ" onchange="renderQuery()">
         <option value="">全部位置</option>
@@ -215,6 +216,7 @@ tr.item-row:hover td{background:#f9f9f9;}
       <div class="stats" id="statsA"></div>
       <div class="toolbar">
         <input type="text" id="searchA" placeholder="搜尋零件編號..." oninput="renderAdmin()">
+        <button class="btn btn-primary" onclick="renderRecords()">搜尋</button>
         <select id="seriesA" onchange="renderAdmin()"><option value="">全部系列</option></select>
         <select id="wallA" onchange="renderAdmin()">
           <option value="">全部位置</option>
@@ -369,7 +371,7 @@ tr.item-row:hover td{background:#f9f9f9;}
     <div style="margin-top:14px">
       <div class="form-row"><label>聯絡人姓名 *</label><input type="text" id="cartName" placeholder="請輸入姓名"></div>
       <div class="form-row"><label>聯絡電話 *</label><input type="tel" id="cartPhone" placeholder="請輸入電話"></div>
-      <div class="form-row"><label>客服 處理人</label><input type="text" id="cart客服" placeholder="請輸入處理人姓名"></div>
+      <div class="form-row"><label>客服處理人</label><input type="text" id="cart客服" placeholder="請輸入處理人姓名"></div>
       <div class="form-row"><label>備註</label><textarea id="cartNote" placeholder="選填" style="min-height:50px"></textarea></div>
     </div>
     <div id="cartErr" style="color:#A32D2D;font-size:13px;min-height:18px;"></div>
@@ -515,7 +517,7 @@ function addUnknownToCart(){
   const qty=Math.max(1,parseInt(document.getElementById('noResultsQty').value)||1);
   if(!searchId){showToast('請先輸入零件編號');return;}
   if(cart[searchId]){cart[searchId].qty+=qty;}
-  else cart[searchId]={id:searchId,type:'訂購',qty};
+  else cart[searchId]={id:searchId,type:'預留',qty};
   updateCartBar();showToast(searchId+' 已加入購物車');
 }
 
@@ -699,7 +701,6 @@ function drawQ(){
         <button class="btn-add-cart" onclick="addToCart('${p.id}','訂購')">+ 訂購</button>
       </div>`;
     } else {
-      const inCartBadge=inCart?`<span style="font-size:11px;color:#3B6D11;margin-left:4px">✓ 已入車</span>`:'';
       actionHTML=`<div class="part-actions">
         <input type="number" id="qty_${p.id}" min="1" value="1" class="qty-input">
         <button class="btn-add-cart" onclick="addToCart('${p.id}','訂購')">訂購</button>
