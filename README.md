@@ -696,13 +696,13 @@ function drawQ(){
       actionHTML=`<div class="part-actions">
         <span class="out-hint">無庫存・預訂需 1-2 個月</span>
         <input type="number" id="qty_${p.id}" min="1" value="1" class="qty-input">
-        <button class="btn-add-cart" onclick="addToCart('${p.id}','加入購物車')">+ 加入購物車</button>
+        <button class="btn-add-cart" onclick="addToCart('${p.id}')">+加入購物車</button>
       </div>`;
     } else {
       const inCartBadge=inCart?`<span style="font-size:11px;color:#3B6D11;margin-left:4px">✓ 已入車</span>`:'';
       actionHTML=`<div class="part-actions">
         <input type="number" id="qty_${p.id}" min="1" value="1" class="qty-input">
-        <button class="btn-reserve-add" onclick="addToCart('${p.id}','加入購物車')">加入購物車</button>
+        <button class="btn-reserve-add" onclick="addToCart('${p.id}')">加入購物車</button>
         ${inCartBadge}
       </div>`;
     }
