@@ -146,7 +146,6 @@ tr.item-row:hover td{background:#f9f9f9;}
     <div class="stats" id="statsQ"></div>
     <div class="toolbar">
       <input type="text" id="searchQ" placeholder="搜尋零件編號..." oninput="renderQuery()">
-      <button class="btn btn-primary" onclick="renderQuery()">搜尋</button>
       <select id="seriesQ" onchange="renderQuery()"><option value="">全部系列</option></select>
       <select id="wallQ" onchange="renderQuery()">
         <option value="">全部位置</option>
@@ -216,7 +215,6 @@ tr.item-row:hover td{background:#f9f9f9;}
       <div class="stats" id="statsA"></div>
       <div class="toolbar">
         <input type="text" id="searchA" placeholder="搜尋零件編號..." oninput="renderAdmin()">
-        <button class="btn btn-primary" onclick="renderRecords()">搜尋</button>
         <select id="seriesA" onchange="renderAdmin()"><option value="">全部系列</option></select>
         <select id="wallA" onchange="renderAdmin()">
           <option value="">全部位置</option>
@@ -371,7 +369,7 @@ tr.item-row:hover td{background:#f9f9f9;}
     <div style="margin-top:14px">
       <div class="form-row"><label>聯絡人姓名 *</label><input type="text" id="cartName" placeholder="請輸入姓名"></div>
       <div class="form-row"><label>聯絡電話 *</label><input type="tel" id="cartPhone" placeholder="請輸入電話"></div>
-      <div class="form-row"><label>客服處理人</label><input type="text" id="cart客服" placeholder="請輸入處理人姓名"></div>
+      <div class="form-row"><label>客服處理人</label><input type="text" id="cartCSC" placeholder="請輸入處理人姓名"></div>
       <div class="form-row"><label>備註</label><textarea id="cartNote" placeholder="選填" style="min-height:50px"></textarea></div>
     </div>
     <div id="cartErr" style="color:#A32D2D;font-size:13px;min-height:18px;"></div>
@@ -517,7 +515,7 @@ function addUnknownToCart(){
   const qty=Math.max(1,parseInt(document.getElementById('noResultsQty').value)||1);
   if(!searchId){showToast('請先輸入零件編號');return;}
   if(cart[searchId]){cart[searchId].qty+=qty;}
-  else cart[searchId]={id:searchId,type:'預留',qty};
+  else cart[searchId]={id:searchId,type:'訂購',qty};
   updateCartBar();showToast(searchId+' 已加入購物車');
 }
 
@@ -548,7 +546,7 @@ function openCartModal(){
   }
   document.getElementById('cartName').value='';
   document.getElementById('cartPhone').value='';
-  document.getElementById('cart客服').value='';
+  document.getElementById('cartCSC').value='';
   document.getElementById('cartNote').value='';
   document.getElementById('cartErr').textContent='';
   document.getElementById('cartModal').classList.add('show');
@@ -574,7 +572,7 @@ function submitCart(){
   orders.push({
     orderId,type:'購物車',items:orderItems,
     totalAmt,name,phone,
-    客服:document.getElementById('cart客服').value,
+    csc:document.getElementById('cartCSC').value,
     note:document.getElementById('cartNote').value,
     date:todayStr(),isoDate:todayISO(),
     status:'未處理',notifiedDate:null,notifiedInputDate:null,time:new Date().toISOString()
@@ -588,7 +586,7 @@ function submitCart(){
 function printCartForm(){
   const name=document.getElementById('cartName').value||'—';
   const phone=document.getElementById('cartPhone').value||'—';
-  const 客服=document.getElementById('cart客服').value||'—';
+  const csc=document.getElementById('cartCSC').value||'—';
   const note=document.getElementById('cartNote').value||'—';
   const items=Object.values(cart);
   const rows=items.map(c=>{const price=getPrice(c.id);return`<tr><td>${c.id}</td><td>${(parts.find(p=>p.id===c.id)||{}).series||''}</td><td>${c.type}</td><td>${c.qty}</td><td>$${price}</td><td>$${(price*c.qty).toFixed(0)}</td></tr>`;}).join('');
@@ -605,7 +603,7 @@ function printCartForm(){
   <body><h1>零件訂購單</h1>
   <div class="row"><span class="label">聯絡人</span><span class="val">${name}</span></div>
   <div class="row"><span class="label">電話</span><span class="val">${phone}</span></div>
-  <div class="row"><span class="label">客服處理人</span><span class="val">${客服}</span></div>
+  <div class="row"><span class="label">客服處理人</span><span class="val">${csc}</span></div>
   <div class="row"><span class="label">日期</span><span class="val">${todayStr()}</span></div>
   <div class="row"><span class="label">備註</span><span class="val">${note}</span></div>
   <table><thead><tr><th>零件編號</th><th>系列</th><th>類型</th><th>數量</th><th>單價</th><th>小計</th></tr></thead>
@@ -698,12 +696,13 @@ function drawQ(){
       actionHTML=`<div class="part-actions">
         <span class="out-hint">無庫存・預訂需 1-2 個月</span>
         <input type="number" id="qty_${p.id}" min="1" value="1" class="qty-input">
-        <button class="btn-add-cart" onclick="addToCart('${p.id}','訂購')">+ 訂購</button>
+        <button class="btn-add-cart" onclick="addToCart('${p.id}','加入購物車')">+ 加入購物車</button>
       </div>`;
     } else {
+      const inCartBadge=inCart?`<span style="font-size:11px;color:#3B6D11;margin-left:4px">✓ 已入車</span>`:'';
       actionHTML=`<div class="part-actions">
         <input type="number" id="qty_${p.id}" min="1" value="1" class="qty-input">
-        <button class="btn-add-cart" onclick="addToCart('${p.id}','訂購')">訂購</button>
+        <button class="btn-reserve-add" onclick="addToCart('${p.id}','加入購物車')">加入購物車</button>
         ${inCartBadge}
       </div>`;
     }
@@ -830,7 +829,7 @@ function drawRec(){
       <td>${typeLabel}</td>
       <td>${o.name||'—'}</td>
       <td>${o.phone||'—'}</td>
-      <td>${o.客服||'—'}</td>
+      <td>${o.csc||'—'}</td>
       <td style="white-space:nowrap;font-size:12px">${o.date||'—'}</td>
       <td>
         <select class="status-select" onchange="updateRecStatus(${o._i},this.value)">
@@ -981,9 +980,9 @@ function exportRecordsCSV(){
   const rows=[['類型','零件編號','系列','數量','聯絡人','電話','客服處理人','日期','狀態','通知日','到期日','總金額','備註']];
   orders.forEach(o=>{
     if(o.items){
-      o.items.forEach(it=>{rows.push([o.type,it.id,it.series||'',it.qty,o.name||'',o.phone||'',o.客服||'',o.date||'',o.status,o.notifiedDate||'',o.notifiedDate?expiryDateStr(o.notifiedDate):'',`$${it.subtotal}`,o.note||'']);});
+      o.items.forEach(it=>{rows.push([o.type,it.id,it.series||'',it.qty,o.name||'',o.phone||'',o.csc||'',o.date||'',o.status,o.notifiedDate||'',o.notifiedDate?expiryDateStr(o.notifiedDate):'',`$${it.subtotal}`,o.note||'']);});
     } else {
-      rows.push([o.type,o.partId||'',o.series||'',o.qty||'',o.name||'',o.phone||'',o.客服||'',o.date||'',o.status,o.notifiedDate||'',o.notifiedDate?expiryDateStr(o.notifiedDate):'',o.totalAmt?`$${o.totalAmt}`:'',o.note||'']);
+      rows.push([o.type,o.partId||'',o.series||'',o.qty||'',o.name||'',o.phone||'',o.csc||'',o.date||'',o.status,o.notifiedDate||'',o.notifiedDate?expiryDateStr(o.notifiedDate):'',o.totalAmt?`$${o.totalAmt}`:'',o.note||'']);
     }
   });
   const csv='\uFEFF'+rows.map(r=>r.map(c=>`"${c||''}"`).join(',')).join('\n');
